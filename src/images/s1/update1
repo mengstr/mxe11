@@ -1,0 +1,16 @@
+
+cc -s -O date.c
+chmod 777 /bin/date
+cp a.out /bin/date
+
+cc -s -O dump.c
+chmod 777 /bin/dump
+cp a.out /bin/dump
+
+cc -s -O ln.c
+chmod 777 /bin/ln
+cp a.out /bin/ln
+
+cc -s -O ls.c
+chmod 777 /bin/ls
+cp a.out /bin/ls

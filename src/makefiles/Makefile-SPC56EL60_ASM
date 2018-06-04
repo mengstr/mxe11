@@ -1,0 +1,92 @@
+################################################################################
+#                                                                              #
+#  Makefile for SPC560B                                                        #
+#                                                                              #
+#  (c) 2014-2015 Joerg Wolfram (joerg@jcwolfram.de)                            #
+#                                                                              #
+#                                                                              #
+#                                                                              #
+#                                                                              #
+################################################################################
+
+myNAME=pdp11sim
+
+################################################################################
+
+DEVICE=spc56el60
+PDEVICE=SPC56EL60-BL
+
+LIBS=-luni-$(DEVICE)_mxe
+
+TOOLPREFIX=/usr/local/toolchain/powerpc-vle-elf/bin/powerpc-elf
+UNILIBPREFIX=./unilib/$(DEVICE)
+
+CC=$(TOOLPREFIX)-gcc
+AS=$(TOOLPREFIX)-as
+AR=$(TOOLPREFIX)-ar
+LD=$(TOOLPREFIX)-ld
+OC=$(TOOLPREFIX)-objcopy
+OD=$(TOOLPREFIX)-objdump
+SZ=$(TOOLPREFIX)-size
+
+CFLAGS=-Wall -O2 -mvle -msoft-float -fno-builtin -fno-common -nostartfiles -nostdlib -fshort-double
+CFLAGS+=-I$(UNILIBPREFIX) -L$(UNILIBPREFIX)
+CFLAGS+=-I./inc -DMCU=11 -ffixed-17 -ffixed-18 -ffixed-19 -ffixed-20 -ffixed-21 -ffixed-22 -ffixed-23 
+CFLAGS+=-ffixed-24 -ffixed-25 -ffixed-26 -ffixed-27 -ffixed-28 -ffixed-29 
+
+ASFLAGS=-mvle --defsym PPC_ASM=1
+LDOPTS=-script=$(UNILIBPREFIX)/$(DEVICE)_single.x
+LDOPTS+=$(UNILIBPREFIX)/startup-$(DEVICE)_single.o
+LDFLAGS=-L$(UNILIBPREFIX)
+OCFLAGS=-O srec
+ODFLAGS=-S -D -xdC
+ARFLAGS=rcs
+
+CSOURCES     := $(shell find -L ./src/ -type f -name *.c)
+COBJECTS     := $(patsubst ./%,build/%,$(CSOURCES:.c=.o))
+
+ASOURCES     := $(shell find -L ./src/ -type f -name *.vleasm | sort -n)
+AOBJECTS     := $(patsubst ./%,build/%,$(ASOURCES:.vleasm=.o))
+
+################################################################################
+
+bin:	dir $(COBJECTS) $(AOBJECTS)
+	$(LD) $(LDOPTS)  -o $(myNAME).elf $(AOBJECTS) $(COBJECTS) $(LDFLAGS) $(LIBS)
+	$(OC) $(OCFLAGS) $(myNAME).elf $(myNAME).s37
+	$(SZ) $(myNAME).elf
+#	$(OD) $(ODFLAGS) $(myNAME).elf > $(myNAME).lst
+	@dos2unix $(myNAME).s37
+
+
+build/%.o: ./%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+build/%.o: ./%.vleasm
+	mkdir -p $(dir $@)
+	$(AS) $(ASFLAGS) -c -o $@ $<
+
+dir:	
+	mkdir -p build
+
+prog:	bin
+	uprog2 $(PDEVICE) -empm $(myNAME).s37
+
+start:	clean prog
+	uprog2 $(PDEVICE) -st
+
+clean:
+	@rm -rf build
+	@rm -f $(myNAME).elf
+	@rm -f $(myNAME).s37
+	@rm -f $(myNAME).a
+
+depend:
+	@(sed '/^### DO NOT DELETE THIS LINE ###/,$$d' Makefile;\
+	echo '### DO NOT DELETE THIS LINE ###';\
+	$(CC) -MM $(CFLAGS) $(CSOURCES) $(ASOURCES) |\
+	sed ':1;/\.o: .* \\/{;N;s/ *\\\n */ /;};s/ \/[^ ]*h */ /;t1';\
+	echo '### DEPENDENCIES END ###') > Makefile~ &&\
+	mv Makefile~ Makefile
+
+### DO NOT DELETE THIS LINE ###

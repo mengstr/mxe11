@@ -1,0 +1,5 @@
+#!/bin/bash
+
+pdp11-asm -o itest1 itest1.asm
+pdp11-disasm itest1 > itest1.lst
+./make_header.pl

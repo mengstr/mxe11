@@ -1,0 +1,16 @@
+#/bin/mash
+
+./create_sdl
+./create_sdl_320
+./create_spc56el60
+./create_spc56el60_asm
+./create_stm32f103
+./create_stm32f107
+./create_stm32f405
+./create_stm32f411
+./create_stm32l475
+
+rm -f pdp11sim*
+rm -f Makefile
+chmod ugo-x ./bin/pdp11sim-spc*
+chmod ugo-x ./bin/pdp11sim-stm*

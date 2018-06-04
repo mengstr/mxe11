@@ -1,0 +1,3 @@
+cc -c -O ctime.c
+ar r /lib/libc.a
+rm *.o

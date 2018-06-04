@@ -1,0 +1,3 @@
+#!/bin/bash
+
+uprog2 AT45DB642 -rm readout.s37

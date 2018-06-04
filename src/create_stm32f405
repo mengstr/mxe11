@@ -1,0 +1,9 @@
+#!/bin/bash
+cp makefiles/Makefile-STM32F405 Makefile
+make depend
+make clean
+make
+mv pdp11sim.s39 bin/pdp11sim-stm32f405.s37
+
+
+

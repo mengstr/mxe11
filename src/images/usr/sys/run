@@ -1,0 +1,7 @@
+chdir mxsys
+sh shs
+chdir ../dev
+sh shs
+chdir ..
+sh shld
+mv a.out /mx

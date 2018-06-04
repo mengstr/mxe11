@@ -1,0 +1,397 @@
+.ifdef PPC_ASM
+
+			.include "/usr/local/toolchain/powerpc-vle-elf/include_asm/regs_spc56el.asm"
+
+			.section ".text","ax"
+		
+			.globl ml_put_wval_00
+						
+#-----------------------------------------------------------------------------------------------------
+# fetch next word
+#-----------------------------------------------------------------------------------------------------
+.macro m_fetch_next	
+			lhzx		r26,r25,r17			# get cmd
+			se_addi		r25,2				# increment PC
+#			se_extzh	r25
+			e_rlwinm	r4,r26,29,19,22			# r3 is stage1 routine * 512
+			e_add16i	r4,r4,ml_stage1_00@l
+			se_sub		r4,r24
+			se_mtlr		r4
+			se_blr
+.endm
+
+.macro m_write_io
+			e_rlwinm	r4,r27,1,19,29
+			e_lis		r7,wiow_F000@h			# set table offset
+			e_or2i		r7,wiow_F000@l
+			se_add		r7,r4
+			se_mtctr	r7
+			se_bctr						# jump into table
+.endm
+
+#-----------------------------------------------------------------------------------------------------
+# macros for mode 0-7 (word)
+#-----------------------------------------------------------------------------------------------------
+
+			#--------------------------------------------
+			# mode 0 (register)
+			#--------------------------------------------
+.macro putval_wmode0 sreg
+			e_rlwinm	\sreg,r5,0,16,31		# copy lower 16 bits to register
+			m_fetch_next
+.endm
+
+			#--------------------------------------------
+			# mode 1 (register indirect)
+			#--------------------------------------------
+.macro putval_wmode1 sreg
+			e_rlwinm	r27,\sreg,0,16,31		# get addr
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		putval_m1\@			# branch if I/O
+			sthx		r5,r17,r27			# write data
+			m_fetch_next
+
+putval_m1\@:		m_write_io
+.endm
+
+			#--------------------------------------------
+			# mode 2 (register++ indirect)
+			#--------------------------------------------
+.macro putval_wmode2 sreg
+			e_rlwinm	r27,\sreg,0,16,31		# get addr from register
+			e_add2i.	\sreg,2				# register++
+			e_rlwinm	\sreg,\sreg,0,16,31		# limit register
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		putval_m2\@			# branch if I/O
+			sthx		r5,r17,r27			# write data
+			m_fetch_next
+
+putval_m2\@:		m_write_io
+.endm
+
+			#--------------------------------------------
+			# mode 3 *(register++ indirect)
+			#--------------------------------------------
+.macro putval_wmode3 sreg
+			e_rlwinm	r27,\sreg,0,16,31		# get addr from register
+			e_add2i.	\sreg,2				# register++
+			e_rlwinm	\sreg,\sreg,0,16,31		# limit register
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		putval_m3c\@			# branch if I/O
+			lhzx		r27,r17,r27			# get data (addr)
+putval_m3a\@:		e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		putval_m3b\@			# branch if I/O
+			sthx		r5,r17,r27			# write data
+			m_fetch_next
+			
+putval_m3b\@:		m_write_io
+
+putval_m3c\@:		se_mr		r3,r5				# save data register
+			e_bl		riow_sel			# get I/O word
+			se_mr		r27,r5				# copy result to addr
+			se_mr		r5,r3				# restore data register
+			se_b		putval_m3a\@
+.endm
+
+			#--------------------------------------------
+			# mode 4 (--register indirect)
+			#--------------------------------------------
+.macro putval_wmode4 sreg
+			e_add2i.	\sreg,0xFFFE			# register--
+			e_rlwinm	\sreg,\sreg,0,16,31		# limit to 16 bits
+			e_rlwinm	r27,\sreg,0,16,31		# get addr from register
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		putval_m4\@			# branch if I/O
+			sthx		r5,r17,r27			# write data
+			m_fetch_next
+
+putval_m4\@:		m_write_io
+.endm
+
+			#--------------------------------------------
+			# mode 5 *(--register indirect)
+			#--------------------------------------------
+.macro putval_wmode5 sreg
+			e_add2i.	\sreg,0xFFFE			# register--
+			e_rlwinm	\sreg,\sreg,0,16,31		# limit to 16 bits
+			e_rlwinm	r27,\sreg,0,16,31		# get addr from register
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		putval_m5c\@			# branch if memory
+			lhzx		r27,r17,r27			# get data (addr)
+putval_m5a\@:		e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		putval_m5b\@			# branch if memory
+			sthx		r5,r17,r27
+			m_fetch_next
+			
+putval_m5b\@:		m_write_io
+
+putval_m5c\@:		se_mr		r3,r5				# save data register
+			e_bl		riow_sel			# get I/O word
+			se_mr		r27,r5				# copy result to addr
+			se_mr		r5,r3				# restore data register
+			se_b		putval_m5a\@
+.endm
+			#--------------------------------------------
+			# mode 6 (register indexed)
+			#--------------------------------------------
+.macro putval_wmode6 sreg
+			lhzx		r27,r17,r25			# get offset 
+			se_addi		r25,2				# increment PC
+#			se_extzh	r25				# limit PC
+			add		r27,r27,\sreg			# add offset to register
+			se_extzh	r27				# limit addr
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		putval_m6\@			# branch if I/O
+			sthx		r5,r17,r27			# write data
+			m_fetch_next
+
+putval_m6\@:		m_write_io
+.endm
+
+
+			#--------------------------------------------
+			# mode 7 *(register indexed)
+			#--------------------------------------------
+.macro putval_wmode7 sreg
+			lhzx		r27,r17,r25			# get offset
+			se_addi		r25,2				# increment PC
+#			se_extzh	r25				# limit PC
+			add		r27,r27,\sreg			# add offset
+			se_extzh	r27				# limit addr
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		putval_m7c\@			# branch if I/O
+			lhzx		r27,r17,r27			# get data (addr)
+putval_m7a\@:		e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		putval_m7b\@			# branch if I/O
+			sthx		r5,r17,r27			# write memory
+			m_fetch_next
+			
+putval_m7b\@:		m_write_io					# write I/O and return
+
+putval_m7c\@:		se_mr		r3,r5				# save data register
+			e_bl		riow_sel			# get I/O word
+			se_mr		r27,r5				# copy result to addr
+			se_mr		r5,r3				# restore data register
+			se_b		putval_m7a\@
+.endm
+
+#-----------------------------------------------------------------------------------------------------
+# direct register
+#-----------------------------------------------------------------------------------------------------
+			.balign 128
+ml_put_wval_00:		putval_wmode0	r18
+
+			.balign 128
+			putval_wmode0	r19
+
+			.balign 128
+			putval_wmode0	r20
+
+			.balign 128
+			putval_wmode0	r21
+
+			.balign 128
+			putval_wmode0	r22
+
+			.balign 128
+			putval_wmode0	r23
+
+			.balign 128
+			putval_wmode0	r29
+
+			.balign 128
+			putval_wmode0	r25
+
+#-----------------------------------------------------------------------------------------------------
+# indirect register
+#-----------------------------------------------------------------------------------------------------
+			.balign 128
+ml_put_wval_10:		putval_wmode1	r18
+
+			.balign 128
+			putval_wmode1	r19
+
+			.balign 128
+			putval_wmode1	r20
+
+			.balign 128
+			putval_wmode1	r21
+
+			.balign 128
+			putval_wmode1	r22
+
+			.balign 128
+			putval_wmode1	r23
+
+			.balign 128
+			putval_wmode1	r29
+
+			.balign 128
+			putval_wmode1	r25
+
+
+#-----------------------------------------------------------------------------------------------------
+# indirect register increment
+#-----------------------------------------------------------------------------------------------------
+			.balign 128
+ml_put_wval_20:		putval_wmode2	r18
+
+			.balign 128
+			putval_wmode2	r19
+
+			.balign 128
+			putval_wmode2	r20
+
+			.balign 128
+			putval_wmode2	r21
+
+			.balign 128
+			putval_wmode2	r22
+
+			.balign 128
+			putval_wmode2	r23
+
+			.balign 128
+			putval_wmode2	r29
+
+			.balign 128
+			putval_wmode2	r25
+
+
+#-----------------------------------------------------------------------------------------------------
+# *indirect register increment
+#-----------------------------------------------------------------------------------------------------
+			.balign 128
+ml_put_wval_30:		putval_wmode3	r18
+
+			.balign 128
+			putval_wmode3	r19
+
+			.balign 128
+			putval_wmode3	r20
+
+			.balign 128
+			putval_wmode3	r21
+
+			.balign 128
+			putval_wmode3	r22
+
+			.balign 128
+			putval_wmode3	r23
+
+			.balign 128
+			putval_wmode3	r29
+
+			.balign 128
+			putval_wmode3	r25
+
+#-----------------------------------------------------------------------------------------------------
+# indirect register decrement
+#-----------------------------------------------------------------------------------------------------
+			.balign 128
+ml_put_wval_40:		putval_wmode4	r18
+
+			.balign 128
+			putval_wmode4	r19
+
+			.balign 128
+			putval_wmode4	r20
+
+			.balign 128
+			putval_wmode4	r21
+
+			.balign 128
+			putval_wmode4	r22
+
+			.balign 128
+			putval_wmode4	r23
+
+			.balign 128
+			putval_wmode4	r29
+
+			.balign 128
+			putval_wmode4	r25
+
+#-----------------------------------------------------------------------------------------------------
+# *indirect register decrement
+#-----------------------------------------------------------------------------------------------------
+			.balign 128
+ml_put_wval_50:		putval_wmode5	r18
+
+			.balign 128
+			putval_wmode5	r19
+
+			.balign 128
+			putval_wmode5	r20
+
+			.balign 128
+			putval_wmode5	r21
+
+			.balign 128
+			putval_wmode5	r22
+
+			.balign 128
+			putval_wmode5	r23
+
+			.balign 128
+			putval_wmode5	r29
+
+			.balign 128
+			putval_wmode5	r25
+
+#-----------------------------------------------------------------------------------------------------
+# indexed
+#-----------------------------------------------------------------------------------------------------
+			.balign 128
+ml_put_wval_60:		putval_wmode6	r18
+
+			.balign 128
+			putval_wmode6	r19
+
+			.balign 128
+			putval_wmode6	r20
+
+			.balign 128
+			putval_wmode6	r21
+
+			.balign 128
+			putval_wmode6	r22
+
+			.balign 128
+			putval_wmode6	r23
+
+			.balign 128
+			putval_wmode6	r29
+
+			.balign 128
+			putval_wmode6	r25
+
+#-----------------------------------------------------------------------------------------------------
+# *indexed
+#-----------------------------------------------------------------------------------------------------
+			.balign 128
+ml_put_wval_70:		putval_wmode7	r18
+
+			.balign 128
+			putval_wmode7	r19
+
+			.balign 128
+			putval_wmode7	r20
+
+			.balign 128
+			putval_wmode7	r21
+
+			.balign 128
+			putval_wmode7	r22
+
+			.balign 128
+			putval_wmode7	r23
+
+			.balign 128
+			putval_wmode7	r29
+
+			.balign 128
+			putval_wmode7	r25
+
+			.balign 128
+.endif

@@ -1,0 +1,398 @@
+.ifdef PPC_ASM
+
+
+			.include "/usr/local/toolchain/powerpc-vle-elf/include_asm/regs_spc56el.asm"
+
+			.section ".text","ax"
+
+			.globl	get_bval_dst
+			.globl	get_bval_src
+
+
+#-----------------------------------------------------------------------------------------------------
+# macros for mode 0-7 (byte)
+#-----------------------------------------------------------------------------------------------------
+
+			#--------------------------------------------
+			# mode 0 (register)
+			#--------------------------------------------
+.macro getval_bmode0 sreg
+			e_rlwinm	r5,\sreg,0,24,31
+			se_blr
+.endm
+
+			#--------------------------------------------
+			# mode 1 (register indirect)
+			#--------------------------------------------
+.macro getval_bmode1 sreg
+			e_rlwinm	r27,\sreg,0,16,31
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		getval_bm1\@			# branch if memory
+			lbzx		r5,r17,r27			# get data
+			se_blr
+
+getval_bm1\@:		e_b		riob_sel27			# read I/O
+.endm
+
+			#--------------------------------------------
+			# mode 2 (register++ indirect)
+			#--------------------------------------------
+.macro getval_bmode2 sreg
+			e_rlwinm	r27,\sreg,0,16,31
+			e_add2i.	\sreg,1
+			e_rlwinm	\sreg,\sreg,0,16,31			
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		getval_bm2\@			# branch if memory
+			lbzx		r5,r17,r27			# get data
+			se_blr
+
+getval_bm2\@:		e_b		riob_sel27			# read I/O
+.endm
+
+			#--------------------------------------------
+			# mode 3 *(register++ indirect)
+			#--------------------------------------------
+.macro getval_bmode3 sreg
+			e_rlwinm	r27,\sreg,0,16,31
+			e_add2i.	\sreg,2
+			e_rlwinm	\sreg,\sreg,0,16,31			
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		getval_bm3c\@			# branch if memory
+			lhzx		r27,r17,r27			# get data (addr)
+getval_bm3a\@:		e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		getval_bm3b\@			# branch if memory
+			lbzx		r5,r17,r27
+			se_blr
+			
+getval_bm3b\@:		e_b		riob_sel27			# read I/O and return
+
+getval_bm3c\@:		se_mflr		r3				# save link register
+			e_bl		riob_sel27			# get I/O word
+			se_mtlr		r3				# restore link register
+			se_mr		r27,r5
+			se_b		getval_bm3a\@
+.endm
+
+			#--------------------------------------------
+			# mode 4 (--register indirect)
+			#--------------------------------------------
+.macro getval_bmode4 sreg
+			e_add2i.	\sreg,0xFFFE
+			e_rlwinm	\sreg,\sreg,0,16,31
+			e_rlwinm	r27,\sreg,0,16,31
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		getval_bm4\@			# branch if memory
+			lbzx		r5,r17,r27			# get data
+			se_blr
+
+getval_bm4\@:		e_b		riob_sel27			# read I/O
+.endm
+
+			#--------------------------------------------
+			# mode 5 (--register indirect)
+			#--------------------------------------------
+.macro getval_bmode5 sreg
+			e_add2i.	\sreg,0xFFFE
+			e_rlwinm	\sreg,\sreg,0,16,31
+			e_rlwinm	r27,\sreg,0,16,31
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		getval_bm5c\@			# branch if memory
+			lhzx		r27,r17,r27			# get data (addr)
+getval_bm5a\@:		e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		getval_bm5b\@			# branch if memory
+			lbzx		r5,r17,r27
+			se_blr
+			
+getval_bm5b\@:		e_b		riob_sel27			# read I/O and return
+
+getval_bm5c\@:		se_mflr		r3				# save link register
+			e_bl		riob_sel27			# get I/O word
+			se_mtlr		r3				# restore link register
+			se_mr		r27,r5
+			se_b		getval_bm5a\@
+.endm
+
+
+			#--------------------------------------------
+			# mode 6 (register indexed)
+			#--------------------------------------------
+.macro getval_bmode6 sreg
+			lhzx		r27,r17,r25
+			se_addi		r25,2				# increment PC
+			se_extzh	r25
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		getval_bm6\@			# branch if memory
+			lbzx		r5,r17,r27			# get data
+			se_blr
+
+getval_bm6\@:		e_b		riob_sel27			# read I/O
+.endm
+
+
+			#--------------------------------------------
+			# mode 7 *(register indexed)
+			#--------------------------------------------
+.macro getval_bmode7 sreg
+			lhzx		r27,r17,r25
+			se_addi		r25,2				# increment PC
+			se_extzh	r25
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		getval_bm7c\@			# branch if memory
+			lhzx		r27,r17,r27			# get data (addr)
+getval_bm7a\@:		e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		getval_bm7b\@			# branch if memory
+			lhzx		r5,r17,r27
+			se_blr
+			
+getval_bm7b\@:		e_b		riob_sel27			# read I/O and return
+
+getval_bm7c\@:		se_mflr		r3				# save link register
+			e_bl		riob_sel27			# get I/O word
+			se_mtlr		r3				# restore link register
+			se_mr		r27,r5
+			se_b		getval_bm7a\@
+.endm
+
+
+#-----------------------------------------------------------------------------------------------------
+# the calls for src and dst value
+# result value=r5, mem addr=r27, destroyed: r3,r6
+#-----------------------------------------------------------------------------------------------------
+			.balign 64
+get_bval_src:		e_rlwinm	r5,r26,0,20,25
+			e_lis		r3,ml_get_bval_00@h
+			e_or2i		r3,ml_get_bval_00@l
+			se_add		r5,r3
+			se_mtctr	r5
+			se_bctr
+
+
+			.balign 64
+get_bval_dst:		e_rlwinm	r5,r26,6,20,25
+			e_lis		r3,ml_get_bval_00@h
+			e_or2i		r3,ml_get_bval_00@l
+			se_add		r5,r3
+			se_mtctr	r5
+			se_bctr
+			
+#-----------------------------------------------------------------------------------------------------
+# direct register
+#-----------------------------------------------------------------------------------------------------
+			.balign 64
+ml_get_bval_00:		getval_bmode0	r18
+
+			.balign 64
+			getval_bmode0	r19
+
+			.balign 64
+			getval_bmode0	r20
+
+			.balign 64
+			getval_bmode0	r21
+
+			.balign 64
+			getval_bmode0	r22
+
+			.balign 64
+			getval_bmode0	r23
+
+			.balign 64
+			getval_bmode0	r29
+
+			.balign 64
+			getval_bmode0	r25
+
+#-----------------------------------------------------------------------------------------------------
+# indirect register
+#-----------------------------------------------------------------------------------------------------
+			.balign 64
+ml_get_bval_10:		getval_bmode1	r18
+
+			.balign 64
+			getval_bmode1	r19
+
+			.balign 64
+			getval_bmode1	r20
+
+			.balign 64
+			getval_bmode1	r21
+
+			.balign 64
+			getval_bmode1	r22
+
+			.balign 64
+			getval_bmode1	r23
+
+			.balign 64
+			getval_bmode1	r29
+
+			.balign 64
+			getval_bmode1	r25
+
+
+#-----------------------------------------------------------------------------------------------------
+# indirect register increment
+#-----------------------------------------------------------------------------------------------------
+			.balign 64
+ml_get_bval_20:		getval_bmode2	r18
+
+			.balign 64
+			getval_bmode2	r19
+
+			.balign 64
+			getval_bmode2	r20
+
+			.balign 64
+			getval_bmode2	r21
+
+			.balign 64
+			getval_bmode2	r22
+
+			.balign 64
+			getval_bmode2	r23
+
+			.balign 64
+			getval_bmode2	r29
+
+			.balign 64
+			getval_bmode2	r25
+
+
+#-----------------------------------------------------------------------------------------------------
+# *indirect register increment
+#-----------------------------------------------------------------------------------------------------
+			.balign 64
+ml_get_bval_30:		getval_bmode3	r18
+
+			.balign 64
+			getval_bmode3	r19
+
+			.balign 64
+			getval_bmode3	r20
+
+			.balign 64
+			getval_bmode3	r21
+
+			.balign 64
+			getval_bmode3	r22
+
+			.balign 64
+			getval_bmode3	r23
+
+			.balign 64
+			getval_bmode3	r29
+
+			.balign 64
+			getval_bmode3	r25
+
+#-----------------------------------------------------------------------------------------------------
+# indirect register decrement
+#-----------------------------------------------------------------------------------------------------
+			.balign 64
+ml_get_bval_40:		getval_bmode4	r18
+
+			.balign 64
+			getval_bmode4	r19
+
+			.balign 64
+			getval_bmode4	r20
+
+			.balign 64
+			getval_bmode4	r21
+
+			.balign 64
+			getval_bmode4	r22
+
+			.balign 64
+			getval_bmode4	r23
+
+			.balign 64
+			getval_bmode4	r29
+
+			.balign 64
+			getval_bmode4	r25
+
+#-----------------------------------------------------------------------------------------------------
+# *indirect register decrement
+#-----------------------------------------------------------------------------------------------------
+			.balign 64
+ml_get_bval_50:		getval_bmode5	r18
+
+			.balign 64
+			getval_bmode5	r19
+
+			.balign 64
+			getval_bmode5	r20
+
+			.balign 64
+			getval_bmode5	r21
+
+			.balign 64
+			getval_bmode5	r22
+
+			.balign 64
+			getval_bmode5	r23
+
+			.balign 64
+			getval_bmode5	r29
+
+			.balign 64
+			getval_bmode5	r25
+
+#-----------------------------------------------------------------------------------------------------
+# indexed
+#-----------------------------------------------------------------------------------------------------
+			.balign 64
+ml_get_bval_60:		getval_bmode6	r18
+
+			.balign 64
+			getval_bmode6	r19
+
+			.balign 64
+			getval_bmode6	r20
+
+			.balign 64
+			getval_bmode6	r21
+
+			.balign 64
+			getval_bmode6	r22
+
+			.balign 64
+			getval_bmode6	r23
+
+			.balign 64
+			getval_bmode6	r29
+
+			.balign 64
+			getval_bmode6	r25
+
+#-----------------------------------------------------------------------------------------------------
+# *indexed
+#-----------------------------------------------------------------------------------------------------
+			.balign 64
+ml_get_bval_70:		getval_bmode7	r18
+
+			.balign 64
+			getval_bmode7	r19
+
+			.balign 64
+			getval_bmode7	r20
+
+			.balign 64
+			getval_bmode7	r21
+
+			.balign 64
+			getval_bmode7	r22
+
+			.balign 64
+			getval_bmode7	r23
+
+			.balign 64
+			getval_bmode7	r29
+
+			.balign 64
+			getval_bmode7	r25
+
+
+			.balign 256
+.endif

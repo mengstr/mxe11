@@ -1,0 +1,5 @@
+#!/bin/bash
+
+bin2srec image.bin image.s37
+uprog2 AT45DB642 -pm image.s37
+rm -f image.s37

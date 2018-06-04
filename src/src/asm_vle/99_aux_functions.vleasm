@@ -1,0 +1,191 @@
+.ifdef PPC_ASM
+
+			.include "/usr/local/toolchain/powerpc-vle-elf/include_asm/regs_spc56el.asm"
+
+			.section ".text","ax"
+		
+			.globl ml_hexout_x
+			.globl ml_hexout_adr
+			.globl ml_hexout_val
+			.globl ml_hexout_cmd
+			.globl ml_hexout_psw
+			.globl ml_hexout_pc
+			.globl ml_hexout_r0
+			.globl ml_hexout_r1
+			.globl ml_hexout_r2
+			.globl ml_hexout_r3
+			.globl ml_hexout_r4
+			.globl ml_hexout_r5
+			.globl ml_newline
+			.globl ml_testf40
+						
+
+#-----------------------------------------------------------------------------------------------------
+# helper functions
+#-----------------------------------------------------------------------------------------------------
+			.balign 128
+
+ml_hexout_pc:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'@'	
+			e_bl		send_uart1
+			se_mtar		r16,r25
+			e_b		ml_hexout0
+
+ml_hexout_r0:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'0'	
+			e_bl		send_uart1
+			e_li		r3,'='	
+			e_bl		send_uart1
+			e_rlwinm	r16,r18,0,16,31
+			e_b		ml_hexout0
+
+ml_hexout_r1:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'1'	
+			e_bl		send_uart1
+			e_li		r3,'='	
+			e_bl		send_uart1
+			e_rlwinm	r16,r19,0,16,31
+			e_b		ml_hexout0
+
+ml_hexout_r2:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'2'	
+			e_bl		send_uart1
+			e_li		r3,'='	
+			e_bl		send_uart1
+			e_rlwinm	r16,r20,0,16,31
+			e_b		ml_hexout0
+
+ml_hexout_r3:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'3'	
+			e_bl		send_uart1
+			e_li		r3,'='	
+			e_bl		send_uart1
+			e_rlwinm	r16,r21,0,16,31
+			e_b		ml_hexout0
+
+ml_hexout_r4:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'4'	
+			e_bl		send_uart1
+			e_li		r3,'='	
+			e_bl		send_uart1
+			e_rlwinm	r16,r22,0,16,31
+			e_b		ml_hexout0
+
+ml_hexout_r5:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'5'	
+			e_bl		send_uart1
+			e_li		r3,'='	
+			e_bl		send_uart1
+			e_rlwinm	r16,r23,0,16,31
+			e_b		ml_hexout0
+
+ml_hexout_x:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'>'	
+			e_bl		send_uart1
+			e_b		ml_hexout0
+
+ml_hexout_val:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'='	
+			e_bl		send_uart1
+			se_mtar		r16,r5
+			e_b		ml_hexout0
+			
+ml_hexout_psw:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'P'	
+			e_bl		send_uart1
+			se_mtar		r16,r28
+			e_b		ml_hexout0
+
+ml_hexout_adr:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'>'	
+			e_bl		send_uart1
+			se_mtar		r16,r27
+			e_b		ml_hexout0
+
+ml_hexout_cmd:		se_mflr		r6
+			e_li		r3,0x20
+			e_bl		send_uart1
+			e_li		r3,'#'	
+			e_bl		send_uart1
+			se_mtar		r16,r26
+			e_b		ml_hexout0
+
+
+ml_newline:		se_mflr		r6
+			e_li		r3,0x0a	
+			e_bl		send_uart1
+			e_li		r3,0x0d	
+			e_bl		send_uart1
+			se_mtlr		r6
+			se_blr
+			
+ml_hexout:		se_mflr		r6
+ml_hexout0:		e_rlwinm	r16,r16,20,0,31		# rotate 12 bit right
+		
+ml_hexout1:		e_rlwinm	r3,r16,0,28,31		# get nibble
+			e_rlwinm	r16,r16,4,0,31		# rotate left
+			se_addi		r3,0x20
+			se_addi		r3,0x10
+			e_cmpl16i	r3,0x3a
+			se_blt		ml_hexout2
+			se_addi		r3,7
+ml_hexout2:		e_bl		send_uart1
+
+ml_hexout3:		e_rlwinm	r3,r16,0,28,31		# get nibble
+			e_rlwinm	r16,r16,4,0,31		# rotate left
+			se_addi		r3,0x20
+			se_addi		r3,0x10
+			e_cmpl16i	r3,0x3a
+			se_blt		ml_hexout4
+			se_addi		r3,7
+ml_hexout4:		e_bl		send_uart1
+
+
+ml_hexout5:		e_rlwinm	r3,r16,0,28,31		# get nibble
+			e_rlwinm	r16,r16,4,0,31		# rotate left
+			se_addi		r3,0x20
+			se_addi		r3,0x10
+			e_cmpl16i	r3,0x3a
+			se_blt		ml_hexout6
+			se_addi		r3,7
+ml_hexout6:		e_bl		send_uart1
+
+
+ml_hexout7:		e_rlwinm	r3,r16,0,28,31		# get nibble
+			e_rlwinm	r16,r16,4,0,31		# rotate left
+			se_addi		r3,0x20
+			se_addi		r3,0x10
+			e_cmpl16i	r3,0x3a
+			se_blt		ml_hexout8
+			se_addi		r3,7
+ml_hexout8:		e_bl		send_uart1
+	
+			se_mtlr		r6
+			se_blr
+
+ml_hexout_end:		se_b		ml_hexout_end
+
+.endif
+

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+dd if=image.bin of=/dev/mmcblk0

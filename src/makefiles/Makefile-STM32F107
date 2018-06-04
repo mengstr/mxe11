@@ -1,0 +1,94 @@
+################################################################################
+#                                                                              #
+#  Makefile for STM32F107xC						       #
+#                                                                              #
+#  (c) 2015-2018 Joerg Wolfram (joerg@jcwolfram.de)                            #
+#                                                                              #
+#                                                                              #
+#                                                                              #
+#                                                                              #
+################################################################################
+
+myNAME=pdp11sim
+
+################################################################################
+
+STARTUP=startup-stm32f1xx.o
+DEVICE=stm32f107xc
+PDEVICE=STM32F1xx-256k
+
+LIBS=-luni-$(DEVICE)_mxe -lgcc
+
+TOOLPREFIX=/usr/local/toolchain/arm-none-eabi/bin/arm-none-eabi
+UNILIBPREFIX=./unilib/$(DEVICE)
+
+CC=$(TOOLPREFIX)-gcc
+AS=$(TOOLPREFIX)-as
+AR=$(TOOLPREFIX)-ar
+LD=$(TOOLPREFIX)-gcc
+OC=$(TOOLPREFIX)-objcopy
+OD=$(TOOLPREFIX)-objdump
+SZ=$(TOOLPREFIX)-size
+ST=$(TOOLPREFIX)-strip
+
+CFLAGS=-Wall -O3 -mfloat-abi=soft -mthumb -mcpu=cortex-m3 -msoft-float -fno-builtin -fno-common -nostartfiles -nostdlib -fshort-double
+CFLAGS+=-I$(UNILIBPREFIX) -L$(UNILIBPREFIX)
+CFLAGS+=-I./inc -DMCU=25
+
+LDOPTS=-Wl,-script=$(UNILIBPREFIX)/$(DEVICE).x
+LDOPTS+=-nostartfiles -nostdlib
+LDOPTS+=$(UNILIBPREFIX)/$(STARTUP)
+LDFLAGS=-L/usr/local/toolchain/arm-none-eabi/lib/ -L$(UNILIBPREFIX)
+OCFLAGS=-O srec
+OC1FLAGS=-O ihex
+ODFLAGS=-S -D -xdC
+ARFLAGS=rcs
+
+CSOURCES     := $(shell find -L ./src/ -type f -name *.c)
+COBJECTS     := $(patsubst ./%,build/%,$(CSOURCES:.c=.o))
+
+ASOURCES     := $(shell find -L ./src/ -type f -name *.s)
+AOBJECTS     := $(patsubst ./%,build/%,$(ASOURCES:.s=.o))
+
+################################################################################
+
+bin:	dir $(COBJECTS) $(AOBJECTS)
+	$(LD) $(LDOPTS)  -o $(myNAME).elf $(COBJECTS) $(AOBJECTS) $(LDFLAGS) $(LIBS)
+	$(OC) $(OCFLAGS) $(myNAME).elf $(myNAME).s39
+	$(OD) $(ODFLAGS) $(myNAME).elf > $(myNAME).lst
+	$(SZ) $(myNAME).elf
+	@dos2unix $(myNAME).s39
+
+build/%.o: ./%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+build/%.o: ./%.s
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+dir:	
+	mkdir -p build
+
+prog:	bin
+	uprog2 $(PDEVICE) -empm $(myNAME).s39
+
+start:	clean prog
+	uprog2 $(PDEVICE) -st
+
+clean:
+	@rm -rf build
+	@rm -f $(myNAME).elf
+	@rm -f $(myNAME).s39
+	@rm -f $(myNAME).a
+
+
+depend:
+	@(sed '/^### DO NOT DELETE THIS LINE ###/,$$d' Makefile;\
+	echo '### DO NOT DELETE THIS LINE ###';\
+	$(CC) -MM $(CFLAGS) $(CSOURCES) $(ASOURCES) |\
+	sed ':1;/\.o: .* \\/{;N;s/ *\\\n */ /;};s/ \/[^ ]*h */ /;t1';\
+	echo '### DEPENDENCIES END ###') > Makefile~ &&\
+	mv Makefile~ Makefile
+
+### DO NOT DELETE THIS LINE ###

@@ -1,0 +1,23 @@
+cc -s -O mail.c
+chmod 777 /bin/mail
+cp a.out /bin/mail
+
+cc -s -f -O sa.c
+chmod 777 /usr/bin/sa
+cp a.out /usr/bin/sa
+
+cc -s -O pr.c
+chmod 777 /bin/pr
+cp a.out /bin/pr
+
+cc -s -O who.c
+chmod 777 /bin/who
+cp a.out /bin/who
+
+cc -s -O restor.c
+chmod 777 /bin/restor
+cp a.out /bin/restor
+
+
+
+

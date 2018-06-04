@@ -1,0 +1,424 @@
+.ifdef PPC_ASM
+
+			.include "/usr/local/toolchain/powerpc-vle-elf/include_asm/regs_spc56el.asm"
+
+			.section ".text","ax"
+		
+			.globl riob_FF00
+			.globl riob_sel27
+
+			.balign 32
+riob_sel27:		e_cmpl16i	r27,0xFF00
+			se_blt		riob_nocell	
+			e_rlwinm	r5,r27,2,22,29			# calc offset
+			e_lis		r4,riob_FF00@ha			# get table base
+			e_add16i	r4,r4,riob_FF00@l
+			se_add		r4,r5				# add offset
+			se_mtctr	r4				# copy pointer to CTR
+			se_bctr						# branch into table
+
+riob_nocell:		se_li		r5,0			# value is zero
+			se_blr					# exit
+
+
+
+riob_FF00:		e_b		riob_FF00e		# RKDS @ 0xFF00
+			e_b		riob_FF01e
+riob_FF02:		e_b		riob_FF02e		# RKER @ 0xFF02
+			e_b		riob_FF03e
+riob_FF04:		e_b		riob_FF04e		# RKCS @ 0xFF04
+			e_b		riob_FF05e
+riob_FF06:		e_b		riob_FF06e		# RKWC @ 0xFF06
+			e_b		riob_FF07e
+riob_FF08:		e_b		riob_FF08e		# RKBA @ 0xFF08
+			e_b		riob_FF09e
+riob_FF0A:		e_b		riob_FF0Ae		# RKDA @ 0xFF0A
+			e_b		riob_FF0Be
+riob_FF0C:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF0E:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF10:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF12:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF14:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF16:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF18:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF1A:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF1C:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF1E:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF20:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF22:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF24:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF26:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF28:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF2A:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF2C:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF2E:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF30:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF32:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF34:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF36:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF38:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF3A:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF3C:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF3E:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF40:		e_b		riob_FD40e			# TKS @ 0xFD40
+			e_b	riob_nocell
+riob_FF42:		e_b		riob_FD42e			# TKB @ 0xFD42
+			e_b	riob_nocell
+riob_FF44:		e_b		riob_FD44e			# TPS @ 0xFD44
+			e_b	riob_nocell
+riob_FF46:		e_b		riob_FD46e			# TPB @ 0xFD46
+			e_b	riob_nocell
+riob_FF48:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF4A:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF4C:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF4E:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF50:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF52:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF54:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF56:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF58:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF5A:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF5C:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF5E:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF60:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF62:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF64:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF66:		e_b		riob_FF66e			# LKS @ 0xFF66
+			e_b	riob_nocell
+riob_FF68:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF6A:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF6C:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF6E:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF70:		e_b		riob_FF70e			# TKS @ 0xFF70
+			e_b	riob_nocell
+riob_FF72:		e_b		riob_FF72e			# TKB @ 0xFF72
+			e_b	riob_nocell
+riob_FF74:		e_b		riob_FF74e			# TPS @ 0xFF74
+			e_b	riob_nocell
+riob_FF76:		e_b		riob_FF76e			# TPB @ 0xFF76
+			e_b	riob_nocell
+riob_FF78:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF7A:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF7C:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF7E:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF80:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF82:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF84:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF86:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF88:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF8A:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF8C:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF8E:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF90:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF92:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF94:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF96:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF98:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF9A:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF9C:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FF9E:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFA0:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFA2:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFA4:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFA6:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFA8:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFAA:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFAC:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFAE:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFB0:		e_b	riob_nocell		#get date LOW
+			e_b	riob_nocell
+riob_FFB2:		e_b	riob_nocell		#get date HIGH
+			e_b	riob_nocell
+riob_FFB4:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFB6:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFB8:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFBA:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFBC:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFBE:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFC0:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFC2:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFC4:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFC6:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFC8:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFCA:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFCC:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFCE:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFD0:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFD2:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFD4:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFD6:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFD8:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFDA:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFDC:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFDE:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFE0:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFE2:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFE4:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFE6:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFE8:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFEA:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFEC:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFEE:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFF0:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFF2:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFF4:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFF6:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFF8:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFFA:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFFC:		e_b	riob_nocell
+			e_b	riob_nocell
+riob_FFFE:		e_b		riob_FFFEe		#get PSW
+			e_b		riob_FFFFe		#get PSW
+		
+#-----------------------------------------------------------------------------------------------------
+# extended fct
+#-----------------------------------------------------------------------------------------------------
+riob_FFFEe:		e_rlwinm	r5,r28,0,24,31		#get PSW
+			se_blr
+
+riob_FFFFe:		e_rlwinm	r5,r28,24,24,31		#get PSW
+			se_blr
+			
+		#-----------------------------------------------------------------
+		# KL11
+		#-----------------------------------------------------------------	
+riob_FF66e:		e_lis		r4,lks@ha		# LKS @ 0xFF66
+			e_lhz		r5,lks@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+		
+		#-----------------------------------------------------------------
+		# /dev/tty8
+		#-----------------------------------------------------------------	
+riob_FF70e:		e_lis		r4,tks8@ha		# TKS @ 0xFF70
+			e_lhz		r5,tks8@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+
+riob_FF72e:		e_lis		r4,tks8@ha		# TKB @ 0xFF72
+			e_lhz		r5,tks8@l(r4)
+			se_btsti	r5,24			# test RCVR done
+			se_beq		riob_FF72x		# branch if zero
+			e_and2i.	r5,0xFF7E		# clear bit 0+7
+			e_sth		r5,tks8@l(r4)		# write back
+			
+			e_lis		r4,tkb8@ha		# now get TKB
+			e_lhz		r5,tkb8@l(r4)		#
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+			
+riob_FF72x:		se_li		r5,0			# return zero
+			se_blr
+	
+riob_FF74e:		e_lis		r4,tps8@ha		# TPS @ 0xFF74
+			e_lhz		r5,tps8@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+	
+riob_FF76e:		se_li		r5,0
+			se_blr
+
+		#-----------------------------------------------------------------
+		# /dev/tty9 (FD40 is moved to FF40)
+		#-----------------------------------------------------------------
+riob_FD40e:		e_lis		r4,tks9@ha		# TKS @ 0xFD40
+			e_lhz		r5,tks9@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+	
+riob_FD42e:		e_lis		r4,tks9@ha		# TKB @ 0xFD42
+			e_lhz		r5,tks9@l(r4)
+			se_btsti	r5,24			#test bit7
+			se_beq		riob_FD42x
+			e_and2i.	r5,0xFF7E
+			e_sth		r5,tks9@l(r4)
+			e_lis		r4,tkb9@ha
+			e_lhz		r5,tkb9@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+			
+riob_FD42x:		se_li		r5,0
+			se_blr
+	
+riob_FD44e:		e_lis		r4,tps9@ha		# TPS @ 0xFD44
+			e_lhz		r5,tps9@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+	
+riob_FD46e:		se_li		r5,0
+			se_blr
+
+		#-----------------------------------------------------------------
+		# RK11
+		#-----------------------------------------------------------------
+riob_FF00e:		e_lis		r4,rkds@ha		# RKDS @ 0xFF00
+			e_lhz		r5,rkds@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+
+riob_FF01e:		e_lis		r4,rkds@ha		# RKDS @ 0xFF00
+			e_lhz		r5,rkds@l(r4)
+			e_rlwinm	r5,r5,24,24,31
+			se_blr
+	
+riob_FF02e:		e_lis		r4,rker@ha		# RKER @ 0xFF02
+			e_lhz		r5,rker@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+
+riob_FF03e:		e_lis		r4,rker@ha		# RKER @ 0xFF02
+			e_lhz		r5,rker@l(r4)
+			e_rlwinm	r5,r5,24,24,31
+			se_blr
+	
+riob_FF04e:		e_lis		r4,rkcs@ha		# RKCS @ 0xFF04
+			e_lhz		r5,rkcs@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+	
+riob_FF05e:		e_lis		r4,rkcs@ha		# RKCS @ 0xFF04
+			e_lhz		r5,rkcs@l(r4)
+			e_rlwinm	r5,r5,24,24,31
+			se_blr
+	
+riob_FF06e:		e_lis		r4,rkwc@ha		# RKWC @ 0xFF06
+			e_lhz		r5,rkwc@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+	
+riob_FF07e:		e_lis		r4,rkwc@ha		# RKWC @ 0xFF06
+			e_lhz		r5,rkwc@l(r4)
+			e_rlwinm	r5,r5,24,24,31
+			se_blr
+	
+riob_FF08e:		e_lis		r4,rkba@ha		# RKBA @ 0xFF08
+			e_lhz		r5,rkba@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+
+riob_FF09e:		e_lis		r4,rkba@ha		# RKBA @ 0xFF08
+			e_lhz		r5,rkba@l(r4)
+			e_rlwinm	r5,r5,24,24,31
+			se_blr
+	
+riob_FF0Ae:		e_lis		r4,rkda@ha		# RKDA @ 0xFF0A
+			e_lhz		r5,rkda@l(r4)
+			e_rlwinm	r5,r5,0,24,31
+			se_blr
+
+riob_FF0Be:		e_lis		r4,rkda@ha		# RKDA @ 0xFF0A
+			e_lhz		r5,rkda@l(r4)
+			e_rlwinm	r5,r5,24,24,31
+			se_blr
+
+			.balign 256	
+.endif

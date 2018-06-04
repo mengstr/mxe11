@@ -1,0 +1,3 @@
+#!/bin/bash
+
+dd of=image.bin if=/dev/mmcblk0 bs=1M count=8

@@ -1,0 +1,202 @@
+.ifdef PPC_ASM
+
+			.include "/usr/local/toolchain/powerpc-vle-elf/include_asm/regs_spc56el.asm"
+
+			.section ".text","ax"
+		
+
+			.globl storeback_word
+									
+#-----------------------------------------------------------------------------------------------------
+# fetch next word
+#-----------------------------------------------------------------------------------------------------
+.macro m_fetch_next	
+			lhzx		r26,r25,r17
+			se_addi		r25,2				# increment PC
+#			se_extzh	r25
+			e_rlwinm	r4,r26,29,19,22			# r3 is stage1 routine * 512
+			e_add16i	r4,r4,ml_stage1_00@l
+			se_sub		r4,r24
+			se_mtlr		r4
+			se_blr
+.endm
+
+#-----------------------------------------------------------------------------------------------------
+# writeback word (r5=data, r27=addr)
+#-----------------------------------------------------------------------------------------------------
+.macro put_memw
+			e_cmpl16i	r27,0xF000			# lowest I/O addr
+			se_bge		put_mem_w2\@			# branch if I/O
+			sthx		r5,r27,r17
+put_mem_w1\@:		m_fetch_next	
+			
+put_mem_w2\@:		e_cmpl16i	r27,0xFF00			# lowest valid I/O addr
+			se_blt		put_mem_w1\@			# branch if unused I/O
+			e_rlwinm	r27,r27,1,19,29			# addr * 2
+			e_lis		r4,wiow_F000@h			# set table offset
+			e_or2i		r4,wiow_F000@l
+			se_add		r27,r4
+			se_mtctr	r27
+			se_bctr						# jump into table
+		
+.endm
+
+#-----------------------------------------------------------------------------------------------------
+# store to register
+#-----------------------------------------------------------------------------------------------------
+			.balign 64
+storeback_word:
+ml_word_storeb_00:	e_rlwinm	r18,r5,0,16,31
+			m_fetch_next
+
+			.balign 64
+ml_word_storeb_01:	e_rlwinm	r19,r5,0,16,31
+			m_fetch_next
+
+			.balign 64
+ml_word_storeb_02:	e_rlwinm	r20,r5,0,16,31
+			m_fetch_next
+
+			.balign 64
+ml_word_storeb_03:	e_rlwinm	r21,r5,0,16,31
+			m_fetch_next
+
+			.balign 64
+ml_word_storeb_04:	e_rlwinm	r22,r5,0,16,31
+			m_fetch_next
+
+			.balign 64
+ml_word_storeb_05:	e_rlwinm	r23,r5,0,16,31
+			m_fetch_next
+
+			.balign 64
+ml_word_storeb_06:	e_rlwinm	r29,r5,0,16,31
+			m_fetch_next
+
+			.balign 64
+ml_word_storeb_07:	e_rlwinm	r25,r5,0,16,31
+			m_fetch_next
+
+			.balign 64
+ml_word_storeb_10:	put_memw
+			.balign 64
+ml_word_storeb_11:	put_memw
+			.balign 64
+ml_word_storeb_12:	put_memw
+			.balign 64
+ml_word_storeb_13:	put_memw
+			.balign 64
+ml_word_storeb_14:	put_memw
+			.balign 64
+ml_word_storeb_15:	put_memw
+			.balign 64
+ml_word_storeb_16:	put_memw
+			.balign 64
+ml_word_storeb_17:	put_memw
+
+			.balign 64
+ml_word_storeb_20:	put_memw
+			.balign 64
+ml_word_storeb_21:	put_memw
+			.balign 64
+ml_word_storeb_22:	put_memw
+			.balign 64
+ml_word_storeb_23:	put_memw
+			.balign 64
+ml_word_storeb_24:	put_memw
+			.balign 64
+ml_word_storeb_25:	put_memw
+			.balign 64
+ml_word_storeb_26:	put_memw
+			.balign 64
+ml_word_storeb_27:	put_memw
+
+			.balign 64
+ml_word_storeb_30:	put_memw
+			.balign 64
+ml_word_storeb_31:	put_memw
+			.balign 64
+ml_word_storeb_32:	put_memw
+			.balign 64
+ml_word_storeb_33:	put_memw
+			.balign 64
+ml_word_storeb_34:	put_memw
+			.balign 64
+ml_word_storeb_35:	put_memw
+			.balign 64
+ml_word_storeb_36:	put_memw
+			.balign 64
+ml_word_storeb_37:	put_memw
+
+			.balign 64
+ml_word_storeb_40:	put_memw
+			.balign 64
+ml_word_storeb_41:	put_memw
+			.balign 64
+ml_word_storeb_42:	put_memw
+			.balign 64
+ml_word_storeb_43:	put_memw
+			.balign 64
+ml_word_storeb_44:	put_memw
+			.balign 64
+ml_word_storeb_45:	put_memw
+			.balign 64
+ml_word_storeb_46:	put_memw
+			.balign 64
+ml_word_storeb_47:	put_memw
+
+			.balign 64
+ml_word_storeb_50:	put_memw
+			.balign 64
+ml_word_storeb_51:	put_memw
+			.balign 64
+ml_word_storeb_52:	put_memw
+			.balign 64
+ml_word_storeb_53:	put_memw
+			.balign 64
+ml_word_storeb_54:	put_memw
+			.balign 64
+ml_word_storeb_55:	put_memw
+			.balign 64
+ml_word_storeb_56:	put_memw
+			.balign 64
+ml_word_storeb_57:	put_memw
+
+			.balign 64
+ml_word_storeb_60:	put_memw
+			.balign 64
+ml_word_storeb_61:	put_memw
+			.balign 64
+ml_word_storeb_62:	put_memw
+			.balign 64
+ml_word_storeb_63:	put_memw
+			.balign 64
+ml_word_storeb_64:	put_memw
+			.balign 64
+ml_word_storeb_65:	put_memw
+			.balign 64
+ml_word_storeb_66:	put_memw
+			.balign 64
+ml_word_storeb_67:	put_memw
+
+			.balign 64
+ml_word_storeb_70:	put_memw
+			.balign 64
+ml_word_storeb_71:	put_memw
+			.balign 64
+ml_word_storeb_72:	put_memw
+			.balign 64
+ml_word_storeb_73:	put_memw
+			.balign 64
+ml_word_storeb_74:	put_memw
+			.balign 64
+ml_word_storeb_75:	put_memw
+			.balign 64
+ml_word_storeb_76:	put_memw
+			.balign 64
+ml_word_storeb_77:	put_memw
+
+			.balign 256
+.endif
+
+

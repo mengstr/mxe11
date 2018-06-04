@@ -1,0 +1,7 @@
+#!/bin/bash
+cp makefiles/Makefile-SPC56EL60 Makefile
+make depend
+make clean
+make
+mv pdp11sim.s37 bin/pdp11sim-spc56el60.s37
+
